@@ -72,7 +72,7 @@ jobs:
     steps:
       # Check out the full repository history so changelog and tag logic can inspect previous releases.
       - name: 📦 Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -225,7 +225,7 @@ jobs:
 
       # Upload the release bundle so it remains available directly from the workflow run.
       - name: 📤 Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: release-deployment-artifacts
           path: release

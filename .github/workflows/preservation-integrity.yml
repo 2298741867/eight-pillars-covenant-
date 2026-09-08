@@ -20,7 +20,7 @@ jobs:
     steps:
       # Check out the repository history so checksums and git change logs reflect the covenant faithfully.
       - name: 📦 Check out the covenant
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -102,7 +102,7 @@ jobs:
 
       # Upload every preservation artifact so the integrity ceremony leaves a durable audit trail.
       - name: 📤 Upload preservation artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: preservation-integrity-report
           path: artifacts/preservation-integrity

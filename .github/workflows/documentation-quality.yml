@@ -22,11 +22,11 @@ jobs:
     steps:
       # Check out the repository so documentation analysis runs against the exact commit under review.
       - name: 📚 Check out the writings
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Install Node.js for TOC generation and spell-check tooling.
       - name: ⚙️ Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 20
 
@@ -227,7 +227,7 @@ jobs:
       # Publish the reports so maintainers can download them after every push, pull request, or scheduled audit.
       - name: 📤 Upload documentation audit
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: documentation-quality-report
           path: artifacts/documentation-quality

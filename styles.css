@@ -514,6 +514,12 @@ h3 {
   margin-top: var(--space-2);
 }
 
+.footer p {
+  max-width: 52rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .footer a {
   color: var(--text);
 }

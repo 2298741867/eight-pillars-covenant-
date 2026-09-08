@@ -131,7 +131,7 @@ const addRetryButton = (card, onRetry) => {
   card.appendChild(button);
 };
 
-const loadDocumentCard = async (card) => {
+const loadDocumentCard = async (card, showSuccessToast = false) => {
   const target = card.getAttribute("data-doc");
   const previewNode = card.querySelector("[data-preview]");
   const readingNode = card.querySelector(".reading-time");
@@ -147,11 +147,14 @@ const loadDocumentCard = async (card) => {
     previewNode.textContent = normalizePreview(text) || "Preview unavailable right now.";
     previewNode.classList.remove("skeleton");
     readingNode.textContent = `${words.toLocaleString()} words · ~${minutes} min`;
+    if (showSuccessToast) {
+      showToast("Preview restored.", "success");
+    }
   } catch (error) {
-    previewNode.textContent = "Preview unavailable right now.";
+    previewNode.textContent = "Preview unavailable right now. Try again.";
     previewNode.classList.remove("skeleton");
     readingNode.textContent = "Reading estimate unavailable";
-    addRetryButton(card, () => loadDocumentCard(card));
+    addRetryButton(card, () => loadDocumentCard(card, true));
     showToast("A document preview could not be loaded.", "error");
   }
 };
@@ -159,7 +162,6 @@ const loadDocumentCard = async (card) => {
 const setupDocumentCards = async () => {
   const cards = document.querySelectorAll(".doc-card[data-doc]");
   await Promise.all([...cards].map((card) => loadDocumentCard(card)));
-  showToast("Covenant library previewed.", "success");
 };
 
 const setupReveals = () => {
