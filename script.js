@@ -1,5 +1,33 @@
-const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 const previewCache = new Map();
+const repositoryContext = (() => {
+  const parts = window.location.pathname.split("/").filter(Boolean);
+  const fileName = parts.at(-1);
+
+  if (
+    window.location.hostname === "github.com" &&
+    (fileName === "index.html" || fileName === "status.html") &&
+    parts.length >= 5 &&
+    (parts[2] === "blob" || parts[2] === "raw")
+  ) {
+    return {
+      owner: parts[0],
+      repo: parts[1],
+      branch: parts.slice(3, -1).join("/"),
+    };
+  }
+
+  return null;
+})();
+
+const resolveContentUrl = (target) => {
+  if (!repositoryContext) return target;
+  return `https://raw.githubusercontent.com/${repositoryContext.owner}/${repositoryContext.repo}/${repositoryContext.branch}/${target.replace(/^\.\//, "")}`;
+};
+
+const dispatchSiteEvent = (source, name, detail) => {
+  source.dispatchEvent(new CustomEvent(name, { bubbles: true, detail }));
+};
 
 const showToast = (message, variant = "success") => {
   const region = document.querySelector(".toast-region");
@@ -32,6 +60,16 @@ const setupStickyNav = () => {
 
   onScroll();
   window.addEventListener("scroll", onScroll, { passive: true });
+};
+
+const setupRepositoryPreviewLinks = () => {
+  if (!repositoryContext) return;
+
+  document.querySelectorAll('a[href$=".md"], a[href$=".html"], a[href="README.md"]').forEach((link) => {
+    const href = link.getAttribute("href");
+    if (!href || href.startsWith("http")) return;
+    link.href = `https://github.com/${repositoryContext.owner}/${repositoryContext.repo}/blob/${repositoryContext.branch}/${href.replace(/^\.\//, "")}`;
+  });
 };
 
 const setupMobileMenu = () => {
@@ -85,6 +123,10 @@ const setupPillarCards = () => {
       button.setAttribute("aria-expanded", String(expanded));
       button.textContent = expanded ? "Hide details" : "Read more";
       if (detail) detail.setAttribute("aria-hidden", String(!expanded));
+      dispatchSiteEvent(card, "pillarstatechange", {
+        pillar: card.querySelector("h3")?.textContent || "Unknown pillar",
+        expanded,
+      });
     });
   });
 };
@@ -108,7 +150,7 @@ const readingStats = (text) => {
 
 const fetchDocumentText = async (target) => {
   if (previewCache.has(target)) return previewCache.get(target);
-  const response = await fetch(target, { cache: "no-store" });
+  const response = await fetch(resolveContentUrl(target), { cache: "no-store" });
   if (!response.ok) throw new Error(`Could not load ${target}`);
   const text = await response.text();
   if (!text.trim()) throw new Error(`Empty document for ${target}`);
@@ -147,6 +189,7 @@ const loadDocumentCard = async (card, showSuccessToast = false) => {
     previewNode.textContent = normalizePreview(text) || "Preview unavailable right now.";
     previewNode.classList.remove("skeleton");
     readingNode.textContent = `${words.toLocaleString()} words · ~${minutes} min`;
+    dispatchSiteEvent(card, "documentpreviewloaded", { target, words, minutes });
     if (showSuccessToast) {
       showToast("Preview restored.", "success");
     }
@@ -162,6 +205,40 @@ const loadDocumentCard = async (card, showSuccessToast = false) => {
 const setupDocumentCards = async () => {
   const cards = document.querySelectorAll(".doc-card[data-doc]");
   await Promise.all([...cards].map((card) => loadDocumentCard(card)));
+};
+
+const setupStatusPage = async () => {
+  const versionNode = document.querySelector('[data-status-value="version"]');
+  if (!versionNode) return;
+
+  try {
+    const [statusResponse, healthResponse, certificateResponse] = await Promise.all([
+      fetch(resolveContentUrl("status.json"), { cache: "no-store" }),
+      fetch(resolveContentUrl("healthz.json"), { cache: "no-store" }),
+      fetch(resolveContentUrl("deployment-certificate.json"), { cache: "no-store" }),
+    ]);
+    const status = await statusResponse.json();
+    const health = await healthResponse.json();
+    const certificate = await certificateResponse.json();
+
+    const update = (name, value) => {
+      const node = document.querySelector(`[data-status-value="${name}"]`);
+      if (node) node.textContent = value;
+    };
+
+    update("version", status.version);
+    update("generatedAt", status.generatedAt);
+    update("health", health.status);
+    update("certificate", certificate.blessing || certificate.certificate);
+    update("analytics", status.analytics);
+
+    document.querySelectorAll("[data-status-link]").forEach((link) => {
+      const key = link.getAttribute("data-status-link");
+      if (key && status.endpoints?.[key]) link.setAttribute("href", status.endpoints[key]);
+    });
+  } catch (error) {
+    showToast("Status data could not be loaded.", "error");
+  }
 };
 
 const setupReveals = () => {
@@ -188,8 +265,10 @@ const setupReveals = () => {
   items.forEach((item) => observer.observe(item));
 };
 
+setupRepositoryPreviewLinks();
 setupStickyNav();
 setupMobileMenu();
 setupPillarCards();
 setupReveals();
 setupDocumentCards();
+setupStatusPage();

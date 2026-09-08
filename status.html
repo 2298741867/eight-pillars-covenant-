@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nine Pillars Covenant Deployment Status</title>
+    <meta
+      name="description"
+      content="Status and quick-start page for the Nine Pillars Covenant across GitHub preview, GitHub Pages, local development, and privacy-first analytics."
+    />
+    <meta name="theme-color" content="#080f1d" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'self'; form-action 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' https://plausible.io https://cdn.usefathom.com; connect-src 'self' https://plausible.io https://cdn.usefathom.com https://raw.githubusercontent.com; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
+    />
+    <meta http-equiv="Permissions-Policy" content="interest-cohort=()" />
+    <link rel="canonical" href="https://2298741867.github.io/eight-pillars-covenant-/status.html" />
+    <link rel="preload" href="styles.css" as="style" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="site-config.js"></script>
+    <script defer src="analytics.js"></script>
+    <script defer src="script.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="hero" id="top">
+      <nav class="topbar" aria-label="Primary">
+        <a class="brand" href="index.html">🌍 Nine Pillars Covenant</a>
+        <button
+          class="menu-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="primary-nav"
+          aria-label="Toggle navigation"
+        >
+          ☰
+        </button>
+        <div class="nav-links" id="primary-nav">
+          <a href="index.html">Home</a>
+          <a href="#methods">Methods</a>
+          <a href="#health">Health</a>
+          <a href="#guides">Guides</a>
+        </div>
+      </nav>
+
+      <div class="hero-content reveal">
+        <p class="eyebrow">Deployment suite</p>
+        <h1>Four delivery paths. One covenant.</h1>
+        <p class="hero-copy">
+          This page tracks the repository preview path, the live GitHub Pages site, the
+          local development server, and the privacy-first analytics layer.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="https://2298741867.github.io/eight-pillars-covenant-/"
+            >Open GitHub Pages</a
+          >
+          <a class="button button-secondary" href="https://github.com/2298741867/eight-pillars-covenant-/blob/main/index.html"
+            >Open GitHub Preview</a
+          >
+          <a class="button button-secondary" href="README.md">Read README</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <section class="section" id="methods">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Quick access</p>
+          <h2>All four access methods</h2>
+          <p>
+            Version <strong data-status-value="version">Loading…</strong> · Updated
+            <span data-status-value="generatedAt">Loading…</span>
+          </p>
+        </div>
+        <div class="doc-grid">
+          <article class="doc-card reveal">
+            <h3>1. GitHub Preview</h3>
+            <p>Review the root HTML directly in the repository preview flow.</p>
+            <p class="doc-meta"><span class="badge">Ready</span> <span>GitHub blob/raw safe</span></p>
+            <a data-status-link="githubPreview" href="https://github.com/2298741867/eight-pillars-covenant-/blob/main/index.html"
+              >Open GitHub preview</a
+            >
+          </article>
+          <article class="doc-card reveal">
+            <h3>2. GitHub Pages</h3>
+            <p>The production-ready static deployment with HTTPS, sitemap, robots, and headers.</p>
+            <p class="doc-meta"><span class="badge">Live</span> <span>Auto-published from main</span></p>
+            <a data-status-link="githubPages" href="https://2298741867.github.io/eight-pillars-covenant-/"
+              >Open GitHub Pages</a
+            >
+          </article>
+          <article class="doc-card reveal">
+            <h3>3. Local Development</h3>
+            <p>Hot-reload development server plus Docker Compose for phone and desktop testing.</p>
+            <p class="doc-meta"><span class="badge">Local</span> <span>make serve or docker-compose up</span></p>
+            <a href="DEVELOPMENT.md">Open development guide</a>
+          </article>
+          <article class="doc-card reveal">
+            <h3>4. Privacy-First Analytics</h3>
+            <p>Plausible/Fathom-ready tracking with Do-Not-Track support and no cookies.</p>
+            <p class="doc-meta"><span class="badge">Optional</span> <span>Disabled by default</span></p>
+            <a href="ANALYTICS.md">Open analytics guide</a>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section-glow" id="health">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Health checks</p>
+          <h2>Deployment health snapshot</h2>
+        </div>
+        <div class="card reveal">
+          <ul class="feature-list">
+            <li><strong>Health:</strong> <span data-status-value="health">Loading…</span></li>
+            <li><strong>Certificate:</strong> <span data-status-value="certificate">Loading…</span></li>
+            <li><strong>Analytics:</strong> <span data-status-value="analytics">Loading…</span></li>
+            <li><strong>Quick local URL:</strong> <code>http://localhost:8000/</code></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section" id="guides">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Guides</p>
+          <h2>Deployment support documents</h2>
+        </div>
+        <div class="path-grid">
+          <article class="path-step reveal">
+            <strong>01</strong>
+            <h3>DEPLOYMENT.md</h3>
+            <p>Before/after status, GitHub Pages workflow, custom-domain readiness, and badges.</p>
+          </article>
+          <article class="path-step reveal">
+            <strong>02</strong>
+            <h3>DEVELOPMENT.md</h3>
+            <p>Make targets, Docker Compose usage, phone testing, and local health checks.</p>
+          </article>
+          <article class="path-step reveal">
+            <strong>03</strong>
+            <h3>ANALYTICS.md</h3>
+            <p>Enable Plausible or Fathom safely without cookies or DNT violations.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        <a href="index.html">Home</a> · <a href="DEPLOYMENT.md">Deployment guide</a> ·
+        <a
+          href="https://github.com/2298741867/eight-pillars-covenant-/issues/new?template=deployment-feedback.md"
+          >Report an issue</a
+        >
+      </p>
+      <p>Shalom ❤️</p>
+    </footer>
+
+    <div class="toast-region" aria-live="polite" aria-atomic="true" aria-label="Site notifications"></div>
+  </body>
+</html>
