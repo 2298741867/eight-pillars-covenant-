@@ -1,0 +1,114 @@
+name: 🌍 Preservation & Integrity
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preservation-integrity-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  preservation-integrity:
+    name: Preserve the covenant in living memory
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository history so checksums and git change logs reflect the covenant faithfully.
+      - name: 📦 Check out the covenant
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Create a dedicated directory for preservation evidence and certificates.
+      - name: 🗂️ Prepare preservation artifacts
+        run: mkdir -p artifacts/preservation-integrity
+
+      # Generate SHA256 checksums for the immutable core documents.
+      - name: 🔐 Generate covenant checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum \
+            README.md \
+            NINE_PILLARS_COMPLETE.md \
+            COVENANT_OF_LIGHT.md \
+            RITUAL_IX_METAMORPHOSIS.md \
+            NINE_PILLARS_VISUAL_GUIDE.md \
+            MASTER_INDEX_NAVIGATION.md \
+            > artifacts/preservation-integrity/SHA256SUMS
+
+      # Record an immutable workflow-local provenance document for this preservation run.
+      - name: 🪨 Create immutable preservation record
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import os
+
+          record = {
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'commit': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_number': os.environ['GITHUB_RUN_NUMBER'],
+              'workflow': os.environ['GITHUB_WORKFLOW'],
+              'status': 'ALIVE',
+          }
+          Path('artifacts/preservation-integrity/immutable-record.json').write_text(
+              json.dumps(record, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+
+      # Capture the recent git history touching the covenant so stewardship changes remain transparent.
+      - name: 📜 Generate change log report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git log --since="31 days ago" --stat -- \
+            README.md \
+            NINE_PILLARS_COMPLETE.md \
+            COVENANT_OF_LIGHT.md \
+            RITUAL_IX_METAMORPHOSIS.md \
+            NINE_PILLARS_VISUAL_GUIDE.md \
+            MASTER_INDEX_NAVIGATION.md \
+            > artifacts/preservation-integrity/git-log-report.txt
+
+      # Issue a preservation certificate and include a badge proving the covenant is still alive.
+      - name: 🏅 Create preservation certificate
+        shell: bash
+        run: |
+          cat <<EOF > artifacts/preservation-integrity/preservation-certificate.md
+          # 🌍 Preservation Certificate
+
+          The Nine Pillars Covenant has completed its scheduled integrity rite.
+
+          - Repository: ${GITHUB_REPOSITORY}
+          - Commit: ${GITHUB_SHA}
+          - Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          - Status badge: ![Covenant ALIVE](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/workflows/preservation-integrity.yml/badge.svg)
+
+          **Covenant Status:** ALIVE
+
+          The sacred record, checksums, and git history have been preserved for long-term auditing.
+          EOF
+          cat artifacts/preservation-integrity/preservation-certificate.md >> "$GITHUB_STEP_SUMMARY"
+
+      # Upload every preservation artifact so the integrity ceremony leaves a durable audit trail.
+      - name: 📤 Upload preservation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: preservation-integrity-report
+          path: artifacts/preservation-integrity
+          if-no-files-found: error
+
+      # End with a simple affirmation when preservation succeeds.
+      - name: ❤️ Bless the preservation run
+        if: success()
+        run: echo "Shalom ❤️ The covenant remains ALIVE."

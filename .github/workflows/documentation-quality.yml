@@ -1,0 +1,259 @@
+name: 📊 Documentation & Quality
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '23 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: documentation-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  documentation-quality:
+    name: Build and audit documentation quality
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository so documentation analysis runs against the exact commit under review.
+      - name: 📚 Check out the writings
+        uses: actions/checkout@v4
+
+      # Install Node.js for TOC generation and spell-check tooling.
+      - name: ⚙️ Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Install only the packages required to analyze markdown and spelling quality.
+      - name: 📦 Install documentation tools
+        run: npm install --global markdown-toc@1.2.0 cspell@8.14.4
+
+      # Create a clean audit workspace for reports, extracted code blocks, and distributable artifacts.
+      - name: 🗂️ Prepare quality artifacts
+        run: mkdir -p artifacts/documentation-quality/{toc,code-blocks,distribution}
+
+      # Validate the documentation structure and capture heading metadata for auditing.
+      - name: 🧱 Validate documentation structure
+        id: structure
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          files = sorted(Path('.').glob('*.md'))
+          report_lines = ['# Documentation Structure Report', '']
+          failures = []
+
+          for path in files:
+            text = path.read_text(encoding='utf-8')
+            headings = [line.strip() for line in text.splitlines() if re.match(r'^\s{0,3}#{1,6}\s+', line)]
+            report_lines.append(f'## {path.name}')
+            report_lines.append(f'- Headings detected: {len(headings)}')
+            report_lines.append(f'- Starts with H1: {"yes" if headings and headings[0].startswith("# ") else "no"}')
+            report_lines.append('')
+            if not headings or not headings[0].startswith('# '):
+              failures.append(f'{path.name} is missing a leading H1 heading')
+
+          Path('artifacts/documentation-quality/structure-report.md').write_text(
+              '\n'.join(report_lines) + '\n',
+              encoding='utf-8',
+          )
+
+          if failures:
+            Path('artifacts/documentation-quality/structure-errors.txt').write_text(
+                '\n'.join(f'❌ {failure}' for failure in failures) + '\n',
+                encoding='utf-8',
+            )
+            sys.exit(1)
+          PY
+
+      # Generate a table of contents for every markdown file without mutating the source documents.
+      - name: 🧭 Generate markdown tables of contents
+        id: toc
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for file in *.md; do
+            markdown-toc "$file" > "artifacts/documentation-quality/toc/${file%.md}.toc.md"
+          done
+
+      # Extract fenced code blocks into standalone files and fail cleanly if fences are unbalanced.
+      - name: 🧪 Extract and validate code blocks
+        id: code-blocks
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          output_dir = Path('artifacts/documentation-quality/code-blocks')
+          manifest = []
+          failures = []
+          fence_pattern = re.compile(r'^```')
+
+          for path in sorted(Path('.').glob('*.md')):
+            lines = path.read_text(encoding='utf-8').splitlines()
+            fence_lines = [index for index, line in enumerate(lines, start=1) if fence_pattern.match(line)]
+            if len(fence_lines) % 2 != 0:
+              failures.append(f'{path.name} has an unbalanced fenced code block')
+              continue
+
+            block_index = 0
+            inside = False
+            buffer = []
+            for line in lines:
+              if fence_pattern.match(line):
+                if inside:
+                  block_index += 1
+                  destination = output_dir / f'{path.stem}-block-{block_index:02d}.txt'
+                  destination.write_text('\n'.join(buffer) + '\n', encoding='utf-8')
+                  manifest.append(f'{path.name}: block {block_index} -> {destination.name}')
+                  buffer = []
+                inside = not inside
+                continue
+              if inside:
+                buffer.append(line)
+
+          Path('artifacts/documentation-quality/code-block-manifest.txt').write_text(
+              '\n'.join(manifest) + ('\n' if manifest else ''),
+              encoding='utf-8',
+          )
+
+          if failures:
+            Path('artifacts/documentation-quality/code-block-errors.txt').write_text(
+                '\n'.join(f'❌ {failure}' for failure in failures) + '\n',
+                encoding='utf-8',
+            )
+            sys.exit(1)
+          PY
+
+      # Generate documentation statistics that can be audited or attached to releases.
+      - name: 📈 Generate markdown statistics
+        id: stats
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          rows = ['file,lines,words,characters,headings,links,code_blocks']
+          link_pattern = re.compile(r'\[[^\]]+\]\(([^)]+)\)')
+          fence_pattern = re.compile(r'^```')
+
+          for path in sorted(Path('.').glob('*.md')):
+            text = path.read_text(encoding='utf-8')
+            lines = text.splitlines()
+            rows.append(
+                ','.join([
+                    path.name,
+                    str(len(lines)),
+                    str(sum(len(line.split()) for line in lines)),
+                    str(len(text)),
+                    str(sum(1 for line in lines if re.match(r'^\s{0,3}#{1,6}\s+', line))),
+                    str(len(link_pattern.findall(text))),
+                    str(sum(1 for line in lines if fence_pattern.match(line)) // 2),
+                ])
+            )
+
+          Path('artifacts/documentation-quality/markdown-statistics.csv').write_text(
+              '\n'.join(rows) + '\n',
+              encoding='utf-8',
+          )
+          PY
+
+      # Spell-check the markdown corpus with a repository-specific custom dictionary.
+      - name: 🔤 Spell-check documentation
+        id: spellcheck
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          cspell lint "*.md" --config .cspell.json --no-progress \
+            | tee artifacts/documentation-quality/spellcheck.txt
+
+      # Package the source documents and generated reports into a single distribution bundle.
+      - name: 📦 Build distribution artifacts
+        id: distribution
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -czf artifacts/documentation-quality/distribution/documentation-bundle.tar.gz \
+            ./*.md \
+            artifacts/documentation-quality/toc \
+            artifacts/documentation-quality/markdown-statistics.csv \
+            artifacts/documentation-quality/structure-report.md \
+            artifacts/documentation-quality/code-block-manifest.txt \
+            artifacts/documentation-quality/spellcheck.txt
+
+      # Summarize the documentation audit even when one of the checks fails.
+      - name: 📝 Compile quality summary
+        if: always()
+        shell: bash
+        run: |
+          cat <<EOF > artifacts/documentation-quality/summary.md
+          # 📊 Documentation Quality Report
+
+          | Check | Status |
+          | --- | --- |
+          | Documentation structure | ${{ steps.structure.outcome }} |
+          | Table of contents generation | ${{ steps.toc.outcome }} |
+          | Code block extraction | ${{ steps.code-blocks.outcome }} |
+          | Markdown statistics | ${{ steps.stats.outcome }} |
+          | Spell check | ${{ steps.spellcheck.outcome }} |
+          | Distribution packaging | ${{ steps.distribution.outcome }} |
+
+          The covenant documentation has been audited for structure, readability, and distributable quality.
+          EOF
+          cat artifacts/documentation-quality/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      # Publish the reports so maintainers can download them after every push, pull request, or scheduled audit.
+      - name: 📤 Upload documentation audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-quality-report
+          path: artifacts/documentation-quality
+          if-no-files-found: error
+
+      # Fail only after the full report has been preserved.
+      - name: 🚨 Enforce documentation quality
+        if: always()
+        shell: bash
+        run: |
+          outcomes=(
+            "${{ steps.structure.outcome }}"
+            "${{ steps.toc.outcome }}"
+            "${{ steps.code-blocks.outcome }}"
+            "${{ steps.stats.outcome }}"
+            "${{ steps.spellcheck.outcome }}"
+            "${{ steps.distribution.outcome }}"
+          )
+          for outcome in "${outcomes[@]}"; do
+            if [[ "$outcome" != "success" ]]; then
+              echo "Documentation quality checks found issues. Review the uploaded audit." >&2
+              exit 1
+            fi
+          done
+
+      # End with a visible blessing when the documentation remains strong.
+      - name: ❤️ Bless the successful documentation audit
+        if: success()
+        run: echo "Shalom ❤️ Documentation quality shines brightly."
