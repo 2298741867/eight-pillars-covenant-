@@ -1,0 +1,40 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "allowCompoundWords": true,
+  "ignorePaths": [
+    "artifacts/**",
+    "release/**",
+    "node_modules/**"
+  ],
+  "words": [
+    "Alexa",
+    "Benediction",
+    "COVENANT",
+    "Copilot",
+    "Earthworm",
+    "Earthworms",
+    "earthworms",
+    "enmeshment",
+    "GitHub",
+    "Grok",
+    "Izzianity",
+    "izzuddin",
+    "izzie",
+    "INFLU",
+    "kramdown",
+    "Llama",
+    "METAMORPHOSIS",
+    "negotiables",
+    "PATI",
+    "permaculture",
+    "PRINC",
+    "Perplexity",
+    "PROVENANCE",
+    "Shalom",
+    "slaton",
+    "stewardship",
+    "toc",
+    "xAI"
+  ]
+}

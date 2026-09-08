@@ -1,0 +1,264 @@
+name: 🚀 Release & Deployment
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Optional release tag to create during a manual deployment.'
+        required: false
+        type: string
+      publish_pages:
+        description: 'Publish the covenant to GitHub Pages when Pages is enabled.'
+        required: false
+        default: true
+        type: boolean
+      create_immutability_tag:
+        description: 'Create an immutable marker tag for this release.'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: release-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  detect-pages:
+    name: Detect GitHub Pages support
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.pages.outputs.enabled }}
+      html_url: ${{ steps.pages.outputs.html_url }}
+
+    steps:
+      # Ask GitHub whether Pages is configured so deployments can be skipped gracefully when unavailable.
+      - name: 🔎 Detect GitHub Pages configuration
+        id: pages
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const response = await github.request('GET /repos/{owner}/{repo}/pages', {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+              core.setOutput('enabled', 'true');
+              core.setOutput('html_url', response.data.html_url || '');
+            } catch (error) {
+              if (error.status === 404) {
+                core.setOutput('enabled', 'false');
+                core.setOutput('html_url', '');
+                core.info('GitHub Pages is not enabled for this repository.');
+              } else {
+                throw error;
+              }
+            }
+
+  release:
+    name: Build release and provenance
+    runs-on: ubuntu-latest
+    needs: detect-pages
+    outputs:
+      release_tag: ${{ steps.release-meta.outputs.release_tag }}
+
+    steps:
+      # Check out the full repository history so changelog and tag logic can inspect previous releases.
+      - name: 📦 Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Create the working directories used for release assets, provenance, and a Pages-ready site.
+      - name: 🗂️ Prepare release workspace
+        run: mkdir -p release/site
+
+      # Compute the release tag in a way that supports both version-tag pushes and manual invocations.
+      - name: 🏷️ Resolve release metadata
+        id: release-meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            release_tag="${GITHUB_REF_NAME}"
+          elif [[ -n "${{ inputs.release_tag || '' }}" ]]; then
+            release_tag="${{ inputs.release_tag }}"
+          else
+            release_tag="manual-$(date -u +%Y%m%d-%H%M%S)"
+          fi
+          echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
+          echo "RELEASE_TAG=$release_tag" >> "$GITHUB_ENV"
+
+      # Build a changelog so every release explains how the covenant evolved since the previous tag.
+      - name: 📝 Generate changelog
+        shell: bash
+        run: |
+          set -euo pipefail
+          previous_tag="$(git tag --sort=-creatordate | grep -Fxv "$RELEASE_TAG" | head -n 1 || true)"
+          {
+            echo "# 🚀 Release Notes for $RELEASE_TAG"
+            echo
+            if [[ -n "$previous_tag" ]]; then
+              echo "Changes since $previous_tag:"
+              echo
+              git log --pretty='- %h %s' "$previous_tag"..HEAD
+            else
+              echo "Initial documented release of the covenant."
+              echo
+              git log --pretty='- %h %s'
+            fi
+          } > release/changelog.md
+
+      # Package the markdown corpus and construct a Pages-ready mirror of the covenant.
+      - name: 📚 Build release payloads
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ./*.md release/site/
+          cp README.md release/site/index.md
+          cat <<'EOF' > release/site/_config.yml
+          title: "Nine Pillars Covenant"
+          description: "Immutable covenant documentation preserved in public light."
+          markdown: kramdown
+          theme: minima
+          EOF
+          tar -czf "release/covenant-documentation-${RELEASE_TAG}.tar.gz" ./*.md
+
+      # Generate cryptographic evidence and provenance metadata for long-term preservation.
+      - name: 🔐 Generate provenance and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum ./*.md > release/SHA256SUMS
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import os
+
+          docs = sorted(path.name for path in Path('.').glob('*.md'))
+          record = {
+              'release_tag': os.environ['RELEASE_TAG'],
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'commit': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_number': os.environ['GITHUB_RUN_NUMBER'],
+              'workflow': os.environ['GITHUB_WORKFLOW'],
+              'core_documents': docs,
+          }
+          Path('release/PROVENANCE.json').write_text(
+              json.dumps(record, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+
+      # Create an immutable marker tag so the release leaves an explicit preservation trail.
+      - name: 🪨 Create immutability marker
+        if: ${{ github.event_name == 'push' || inputs.create_immutability_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          marker_tag="immutable-${RELEASE_TAG}"
+          git fetch --tags --force
+          if git rev-parse "$marker_tag" >/dev/null 2>&1; then
+            echo "Immutability tag $marker_tag already exists."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$marker_tag" "$GITHUB_SHA" -m "Immutability marker for $RELEASE_TAG"
+          git push origin "refs/tags/$marker_tag"
+
+      # Create or update the GitHub Release with all generated evidence attached.
+      - name: 🌍 Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title="Nine Pillars Covenant ${RELEASE_TAG}"
+          assets=(
+            "release/covenant-documentation-${RELEASE_TAG}.tar.gz"
+            "release/SHA256SUMS"
+            "release/PROVENANCE.json"
+          )
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
+            gh release edit "$RELEASE_TAG" --title "$title" --notes-file release/changelog.md
+          else
+            gh release create "$RELEASE_TAG" "${assets[@]}" \
+              --target "$GITHUB_SHA" \
+              --title "$title" \
+              --notes-file release/changelog.md
+          fi
+
+      # Capture a deployment summary that reflects both release creation and Pages publishing intent.
+      - name: 🧾 Generate deployment summary
+        shell: bash
+        run: |
+          cat <<EOF > release/deployment-summary.md
+          # 🚀 Deployment Summary
+
+          - Release tag: ${RELEASE_TAG}
+          - Commit: ${GITHUB_SHA}
+          - GitHub Pages enabled: ${{ needs.detect-pages.outputs.enabled }}
+          - GitHub Pages URL: ${{ needs.detect-pages.outputs.html_url || 'not enabled' }}
+          - Immutability marker: immutable-${RELEASE_TAG}
+
+          The covenant has been prepared for release, provenance has been recorded, and distribution artifacts are attached for stewardship.
+          EOF
+          cat release/deployment-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      # Upload the release bundle so it remains available directly from the workflow run.
+      - name: 📤 Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-deployment-artifacts
+          path: release
+          if-no-files-found: error
+
+      # Make a Pages artifact available only when the repository is configured to receive it.
+      - name: 🌐 Upload Pages artifact
+        if: ${{ needs.detect-pages.outputs.enabled == 'true' && (github.event_name == 'push' || inputs.publish_pages) }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: release/site
+
+      # Celebrate successful release preparation with a visible blessing.
+      - name: ❤️ Bless the release
+        if: success()
+        run: echo "Shalom ❤️ Release artifacts and provenance are ready."
+
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs:
+      - detect-pages
+      - release
+    if: ${{ needs.detect-pages.outputs.enabled == 'true' && (github.event_name == 'push' || inputs.publish_pages) }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      # Deploy the previously uploaded Pages artifact when the repository is configured for Pages hosting.
+      - name: 🚀 Deploy Pages artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      # Add the live Pages URL to the workflow summary for easy auditing.
+      - name: 📝 Record Pages deployment
+        shell: bash
+        run: |
+          {
+            echo
+            echo "GitHub Pages deployment URL: ${{ steps.deployment.outputs.page_url }}"
+            echo
+            echo "Shalom ❤️ The covenant is live in public light."
+          } >> "$GITHUB_STEP_SUMMARY"

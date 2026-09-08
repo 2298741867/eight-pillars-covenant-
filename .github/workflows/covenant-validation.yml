@@ -1,0 +1,244 @@
+name: 🔐 Covenant Validation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: covenant-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  covenant-validation:
+    name: Validate the immutable covenant
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository so every validation runs against the exact revision under review.
+      - name: 🕊️ Check out the covenant
+        uses: actions/checkout@v4
+
+      # Install Node.js because markdown tooling is distributed through npm.
+      - name: ⚙️ Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Install only the markdown linter needed for this workflow.
+      - name: 📦 Install validation tools
+        run: npm install --global markdownlint-cli@0.41.0
+
+      # Create a dedicated audit folder so every downstream step can write structured evidence.
+      - name: 🗂️ Prepare validation artifacts
+        run: mkdir -p artifacts/covenant-validation
+
+      # Confirm the repository still contains every document that defines the immutable covenant.
+      - name: 📜 Verify immutable core documents
+        id: core-docs
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          report="artifacts/covenant-validation/core-documents.txt"
+          missing=0
+          while IFS= read -r doc; do
+            if [[ -f "$doc" ]]; then
+              echo "✅ $doc is present" | tee -a "$report"
+            else
+              echo "❌ $doc is missing" | tee -a "$report"
+              missing=1
+            fi
+          done <<'DOCS'
+          README.md
+          NINE_PILLARS_COMPLETE.md
+          COVENANT_OF_LIGHT.md
+          RITUAL_IX_METAMORPHOSIS.md
+          NINE_PILLARS_VISUAL_GUIDE.md
+          MASTER_INDEX_NAVIGATION.md
+          DOCS
+          exit "$missing"
+
+      # Guard the core mission language so the philosophy remains visible in the repository.
+      - name: 🌟 Preserve covenant philosophy
+        id: philosophy
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          report="artifacts/covenant-validation/philosophy-preservation.txt"
+          phrases=("Nine Pillars" "Earthworm Benediction")
+          failed=0
+          for phrase in "${phrases[@]}"; do
+            if grep -R -q --include='*.md' "$phrase" .; then
+              echo "✅ Found philosophy phrase: $phrase" | tee -a "$report"
+            else
+              echo "❌ Missing philosophy phrase: $phrase" | tee -a "$report"
+              failed=1
+            fi
+          done
+          exit "$failed"
+
+      # Lint all markdown content using a repository-scoped configuration tailored to these sacred documents.
+      - name: 🧹 Lint markdown structure
+        id: markdownlint
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          markdownlint "*.md" --config .markdownlint.json \
+            | tee artifacts/covenant-validation/markdownlint.txt
+
+      # Ensure all relative markdown links still point to real files and anchors.
+      - name: 🔗 Validate internal markdown links
+        id: internal-links
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          root = Path('.')
+          link_pattern = re.compile(r'\[[^\]]+\]\(([^)]+)\)')
+          heading_pattern = re.compile(r'^\s{0,3}#{1,6}\s+(.*)$')
+
+          def slugify(text: str) -> str:
+            text = text.strip().lower()
+            text = re.sub(r'[^\w\s-]', '', text)
+            text = re.sub(r'\s+', '-', text)
+            return text
+
+          anchors = {}
+          for path in root.glob('*.md'):
+            doc_anchors = set()
+            for line in path.read_text(encoding='utf-8').splitlines():
+              match = heading_pattern.match(line)
+              if match:
+                doc_anchors.add(slugify(match.group(1)))
+            anchors[path.resolve()] = doc_anchors
+
+          errors = []
+          for path in root.glob('*.md'):
+            text = path.read_text(encoding='utf-8')
+            for raw_target in link_pattern.findall(text):
+              target = raw_target.strip()
+              if not target or target.startswith(('http://', 'https://', 'mailto:')):
+                continue
+
+              doc_target, _, fragment = target.partition('#')
+              target_path = (path.parent / doc_target).resolve() if doc_target else path.resolve()
+
+              if doc_target and not target_path.exists():
+                errors.append(f'{path.name}: missing target {target}')
+                continue
+
+              if fragment:
+                anchor_set = anchors.get(target_path, set())
+                if slugify(fragment) not in anchor_set:
+                  errors.append(f'{path.name}: missing anchor {target}')
+
+          report = Path('artifacts/covenant-validation/internal-links.txt')
+          if errors:
+            report.write_text('\n'.join(f'❌ {error}' for error in errors) + '\n', encoding='utf-8')
+            sys.exit(1)
+
+          report.write_text('✅ All internal markdown links resolved successfully.\n', encoding='utf-8')
+          PY
+
+      # Verify that the full covenant document still names every pillar explicitly.
+      - name: 🧭 Verify all nine pillars
+        id: pillars
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import sys
+
+          required = [
+              'UNITY',
+              'PRODUCTION',
+              'PEACE',
+              'PATIENCE',
+              'PRINCIPLE',
+              'INSPIRATION',
+              'INFLUENCE',
+              'LOVE',
+              'METAMORPHOSIS',
+          ]
+
+          text = Path('NINE_PILLARS_COMPLETE.md').read_text(encoding='utf-8')
+          missing = [pillar for pillar in required if pillar not in text]
+          report = Path('artifacts/covenant-validation/pillars.txt')
+
+          if missing:
+            report.write_text(
+                '\n'.join(f'❌ Missing pillar: {pillar}' for pillar in missing) + '\n',
+                encoding='utf-8',
+            )
+            sys.exit(1)
+
+          report.write_text('✅ All nine pillars are present in NINE_PILLARS_COMPLETE.md.\n', encoding='utf-8')
+          PY
+
+      # Build a human-readable audit summary even if one of the validation steps fails.
+      - name: 📝 Compile validation report
+        if: always()
+        shell: bash
+        run: |
+          cat <<EOF > artifacts/covenant-validation/summary.md
+          # 🔐 Covenant Validation Report
+
+          | Check | Status |
+          | --- | --- |
+          | Immutable core documents | ${{ steps.core-docs.outcome }} |
+          | Philosophy preservation | ${{ steps.philosophy.outcome }} |
+          | Markdown syntax | ${{ steps.markdownlint.outcome }} |
+          | Internal links | ${{ steps.internal-links.outcome }} |
+          | Nine pillars completeness | ${{ steps.pillars.outcome }} |
+
+          This report honors the covenant by auditing immutability, structure integrity, and philosophy preservation.
+          EOF
+          cat artifacts/covenant-validation/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      # Upload the full audit trail so maintainers can review evidence after the run completes.
+      - name: 📦 Upload covenant audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: covenant-validation-report
+          path: artifacts/covenant-validation
+          if-no-files-found: error
+
+      # Fail the job only after all evidence has been collected and published.
+      - name: 🚨 Enforce covenant integrity
+        if: always()
+        shell: bash
+        run: |
+          outcomes=(
+            "${{ steps.core-docs.outcome }}"
+            "${{ steps.philosophy.outcome }}"
+            "${{ steps.markdownlint.outcome }}"
+            "${{ steps.internal-links.outcome }}"
+            "${{ steps.pillars.outcome }}"
+          )
+          for outcome in "${outcomes[@]}"; do
+            if [[ "$outcome" != "success" ]]; then
+              echo "Covenant validation detected drift. Review the uploaded audit." >&2
+              exit 1
+            fi
+          done
+
+      # Leave the run with a clear blessing when everything is intact.
+      - name: ❤️ Bless the successful validation
+        if: success()
+        run: echo "Shalom ❤️ The covenant remains whole."
