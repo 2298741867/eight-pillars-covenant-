@@ -4,6 +4,8 @@ const path = require("node:path");
 const url = require("node:url");
 
 const root = __dirname;
+const rootRealPath = fs.realpathSync(root);
+const rootRealPrefix = `${rootRealPath}${path.sep}`;
 const port = Number(process.env.PORT || 8000);
 const host = process.env.HOST || "0.0.0.0";
 const clients = new Set();
@@ -125,17 +127,17 @@ const server = http.createServer((req, res) => {
   }
 
   const relativePath = decodedPath === "/" ? "index.html" : decodedPath.replace(/^\/+/, "");
-  const absolutePath = path.resolve(root, relativePath);
-  if (!fs.existsSync(absolutePath)) {
+  const absolutePath = path.resolve(rootRealPath, relativePath);
+  const inRoot =
+    absolutePath === rootRealPath || absolutePath.startsWith(rootRealPrefix);
+  if (!inRoot || !fs.existsSync(absolutePath)) {
     return send(res, 404, "Not found", mimeTypes[".txt"]);
   }
 
-  const realRoot = fs.realpathSync(root);
   const realPath = fs.realpathSync(absolutePath);
-  const relativeToRoot = path.relative(realRoot, realPath);
+  const inRealRoot = realPath === rootRealPath || realPath.startsWith(rootRealPrefix);
   if (
-    relativeToRoot.startsWith("..") ||
-    path.isAbsolute(relativeToRoot) ||
+    !inRealRoot ||
     fs.statSync(realPath).isDirectory()
   ) {
     return send(res, 404, "Not found", mimeTypes[".txt"]);
