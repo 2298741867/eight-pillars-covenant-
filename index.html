@@ -6,30 +6,41 @@
     <title>Nine Pillars Covenant</title>
     <meta
       name="description"
-      content="A living website for the Nine Pillars Covenant, its sacred documents, and its path of Love, Unity, and Shalom."
+      content="Step into the Nine Pillars Covenant—a serene, accessible front door to sacred documents, guided paths, and living purpose."
     />
     <link rel="stylesheet" href="styles.css" />
+    <script defer src="script.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
 
-    <header class="hero">
+    <header class="hero" id="top">
       <nav class="topbar" aria-label="Primary">
-        <div class="brand">🌍 Nine Pillars Covenant</div>
-        <div class="nav-links">
+        <a class="brand" href="#top">🌍 Nine Pillars Covenant</a>
+        <button
+          class="menu-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="primary-nav"
+          aria-label="Toggle navigation"
+        >
+          ☰
+        </button>
+        <div class="nav-links" id="primary-nav">
           <a href="#pillars">Pillars</a>
           <a href="#library">Library</a>
           <a href="#path">Path</a>
+          <a href="#inspiration">Inspiration</a>
         </div>
       </nav>
 
-      <div class="hero-content">
-        <p class="eyebrow">A living scroll for your browser</p>
-        <h1>Love, Unity, Shalom — rendered as a real website.</h1>
+      <div class="hero-content reveal">
+        <p class="eyebrow">A cathedral of light and purpose</p>
+        <h1>Enter the covenant with clarity, beauty, and peace.</h1>
         <p class="hero-copy">
-          This page turns the covenant repository into something you can open and
-          feel in a browser right now: a readable home page, a guided entry point,
-          and a doorway into the core sacred texts.
+          This is the sacred front door to the Nine Pillars: an immersive, readable,
+          and mobile-ready space where every seeker can begin with love and walk in
+          unity toward transformation.
         </p>
         <div class="hero-actions">
           <a class="button button-primary" href="#library">Open the covenant</a>
@@ -39,100 +50,75 @@
     </header>
 
     <main id="main-content">
-      <section class="section section-glow">
+      <section class="section section-glow reveal">
         <div class="section-heading">
           <p class="eyebrow">Purpose</p>
           <h2>Why this site exists</h2>
         </div>
         <div class="card">
           <p>
-            The Nine Pillars Covenant is a documentation-centered body of work.
-            This website gives it a true front door: mobile-friendly, visual, and
-            easy to explore without needing GitHub first.
+            The covenant lives in documents; this experience turns them into a calm,
+            discoverable sanctuary where readers can explore, understand, and act.
           </p>
           <ul class="feature-list">
-            <li>Read the covenant in a clean browser-friendly format</li>
-            <li>Find the six core documents quickly</li>
-            <li>See the full Nine Pillars at a glance</li>
-            <li>Keep the repository content intact while making it more accessible</li>
+            <li>Discover all nine pillars with clear symbols and deeper meaning</li>
+            <li>Open core documents with quick previews and reading-time context</li>
+            <li>Follow a guided first path designed for clarity and momentum</li>
+            <li>Experience accessibility-first, responsive design on every device</li>
           </ul>
         </div>
       </section>
 
       <section class="section" id="pillars">
-        <div class="section-heading">
+        <div class="section-heading reveal">
           <p class="eyebrow">The sacred architecture</p>
           <h2>The Nine Pillars</h2>
         </div>
         <div class="pillars-grid">
-          <article class="pillar-card"><span>1</span><h3>Unity</h3><p>All beings are interconnected.</p></article>
-          <article class="pillar-card"><span>2</span><h3>Production</h3><p>Manifest purpose into reality.</p></article>
-          <article class="pillar-card"><span>3</span><h3>Peace</h3><p>Resolve through understanding.</p></article>
-          <article class="pillar-card"><span>4</span><h3>Patience</h3><p>Trust the deep time of growth.</p></article>
-          <article class="pillar-card"><span>5</span><h3>Principle</h3><p>Stand on immutable values.</p></article>
-          <article class="pillar-card"><span>6</span><h3>Inspiration</h3><p>Awaken wonder and beauty.</p></article>
-          <article class="pillar-card"><span>7</span><h3>Influence</h3><p>Ripple outward with intention.</p></article>
-          <article class="pillar-card"><span>8</span><h3>Love</h3><p>The fundamental binding force.</p></article>
-          <article class="pillar-card pillar-card-special"><span>9</span><h3>Metamorphosis</h3><p>Nothing dies. All transforms.</p></article>
+          <article class="pillar-card reveal"><span>🤝</span><h3>1. Unity</h3><p>All beings are interconnected.</p><button class="toggle-detail" type="button" aria-expanded="false">Read more</button><p class="pillar-detail">Unity is the covenant's shared field: no action stands alone, and every choice shapes the whole.</p></article>
+          <article class="pillar-card reveal"><span>⚙️</span><h3>2. Production</h3><p>Manifest purpose into reality.</p><button class="toggle-detail" type="button" aria-expanded="false">Read more</button><p class="pillar-detail">Production turns devotion into craft, ensuring ideas become structures that serve life.</p></article>
+          <article class="pillar-card reveal"><span>☮️</span><h3>3. Peace</h3><p>Resolve through understanding.</p><button class="toggle-detail" type="button" aria-expanded="false">Read more</button><p class="pillar-detail">Peace is an active practice of honest listening, healing conflict before it hardens.</p></article>
+          <article class="pillar-card reveal"><span>⏳</span><h3>4. Patience</h3><p>Trust the deep time of growth.</p><button class="toggle-detail" type="button" aria-expanded="false">Read more</button><p class="pillar-detail">Patience protects sacred timing, honoring slow growth and sustainable transformation.</p></article>
+          <article class="pillar-card reveal"><span>⚖️</span><h3>5. Principle</h3><p>Stand on immutable values.</p><button class="toggle-detail" type="button" aria-expanded="false">Read more</button><p class="pillar-detail">Principle keeps the covenant truthful by grounding action in durable ethical commitments.</p></article>
+          <article class="pillar-card reveal"><span>✨</span><h3>6. Inspiration</h3><p>Awaken wonder and beauty.</p><button class="toggle-detail" type="button" aria-expanded="false">Read more</button><p class="pillar-detail">Inspiration renews courage and imagination so service remains alive, luminous, and creative.</p></article>
+          <article class="pillar-card reveal"><span>🌊</span><h3>7. Influence</h3><p>Ripple outward with intention.</p><button class="toggle-detail" type="button" aria-expanded="false">Read more</button><p class="pillar-detail">Influence directs impact with humility, widening the reach of healing and constructive action.</p></article>
+          <article class="pillar-card reveal"><span>❤️</span><h3>8. Love</h3><p>The fundamental binding force.</p><button class="toggle-detail" type="button" aria-expanded="false">Read more</button><p class="pillar-detail">Love is the covenant's deepest law, uniting difference through care, belonging, and dignity.</p></article>
+          <article class="pillar-card pillar-card-special reveal"><span>💀♾️🌱</span><h3>9. Metamorphosis</h3><p>Nothing dies. All transforms.</p><button class="toggle-detail" type="button" aria-expanded="false">Read more</button><p class="pillar-detail">Metamorphosis completes and restarts the cycle, revealing endings as sacred gateways to rebirth.</p></article>
         </div>
       </section>
 
-      <section class="section" id="library">
-        <div class="section-heading">
+      <section class="section" id="library" aria-live="polite">
+        <div class="section-heading reveal">
           <p class="eyebrow">Core library</p>
           <h2>Open the sacred documents</h2>
         </div>
         <div class="doc-grid">
-          <article class="doc-card">
-            <h3>README</h3>
-            <p>Overview, acknowledgments, mission, pillars, and entry point.</p>
-            <a href="README.md">Open README.md</a>
-          </article>
-          <article class="doc-card">
-            <h3>Nine Pillars Complete</h3>
-            <p>The full teachings and the 9→0→1-8→9 cycle.</p>
-            <a href="NINE_PILLARS_COMPLETE.md">Open NINE_PILLARS_COMPLETE.md</a>
-          </article>
-          <article class="doc-card">
-            <h3>Covenant of Light</h3>
-            <p>Love, Unity, and Shalom against darkness.</p>
-            <a href="COVENANT_OF_LIGHT.md">Open COVENANT_OF_LIGHT.md</a>
-          </article>
-          <article class="doc-card">
-            <h3>Ritual IX</h3>
-            <p>The Metamorphosis ceremony and practice guidance.</p>
-            <a href="RITUAL_IX_METAMORPHOSIS.md">Open RITUAL_IX_METAMORPHOSIS.md</a>
-          </article>
-          <article class="doc-card">
-            <h3>Visual Guide</h3>
-            <p>Quick reference diagrams, charts, and visual structure.</p>
-            <a href="NINE_PILLARS_VISUAL_GUIDE.md">Open NINE_PILLARS_VISUAL_GUIDE.md</a>
-          </article>
-          <article class="doc-card">
-            <h3>Master Index</h3>
-            <p>Choose your reading path through the covenant ecosystem.</p>
-            <a href="MASTER_INDEX_NAVIGATION.md">Open MASTER_INDEX_NAVIGATION.md</a>
-          </article>
+          <article class="doc-card reveal" data-doc="README.md" data-type="Overview"><h3>README</h3><p>Overview, acknowledgments, mission, pillars, and entry point.</p><p class="doc-meta"><span class="badge">Overview</span> <span class="reading-time">Loading…</span></p><p class="preview skeleton" data-preview>Loading preview…</p><a href="README.md">Open README.md</a></article>
+          <article class="doc-card reveal" data-doc="NINE_PILLARS_COMPLETE.md" data-type="Doctrine"><h3>Nine Pillars Complete</h3><p>The full teachings and the 9→0→1-8→9 cycle.</p><p class="doc-meta"><span class="badge">Doctrine</span> <span class="reading-time">Loading…</span></p><p class="preview skeleton" data-preview>Loading preview…</p><a href="NINE_PILLARS_COMPLETE.md">Open NINE_PILLARS_COMPLETE.md</a></article>
+          <article class="doc-card reveal" data-doc="COVENANT_OF_LIGHT.md" data-type="Covenant"><h3>Covenant of Light</h3><p>Love, Unity, and Shalom against darkness.</p><p class="doc-meta"><span class="badge">Covenant</span> <span class="reading-time">Loading…</span></p><p class="preview skeleton" data-preview>Loading preview…</p><a href="COVENANT_OF_LIGHT.md">Open COVENANT_OF_LIGHT.md</a></article>
+          <article class="doc-card reveal" data-doc="RITUAL_IX_METAMORPHOSIS.md" data-type="Ritual"><h3>Ritual IX</h3><p>The Metamorphosis ceremony and practice guidance.</p><p class="doc-meta"><span class="badge">Ritual</span> <span class="reading-time">Loading…</span></p><p class="preview skeleton" data-preview>Loading preview…</p><a href="RITUAL_IX_METAMORPHOSIS.md">Open RITUAL_IX_METAMORPHOSIS.md</a></article>
+          <article class="doc-card reveal" data-doc="NINE_PILLARS_VISUAL_GUIDE.md" data-type="Guide"><h3>Visual Guide</h3><p>Quick reference diagrams, charts, and visual structure.</p><p class="doc-meta"><span class="badge">Guide</span> <span class="reading-time">Loading…</span></p><p class="preview skeleton" data-preview>Loading preview…</p><a href="NINE_PILLARS_VISUAL_GUIDE.md">Open NINE_PILLARS_VISUAL_GUIDE.md</a></article>
+          <article class="doc-card reveal" data-doc="MASTER_INDEX_NAVIGATION.md" data-type="Index"><h3>Master Index</h3><p>Choose your reading path through the covenant ecosystem.</p><p class="doc-meta"><span class="badge">Index</span> <span class="reading-time">Loading…</span></p><p class="preview skeleton" data-preview>Loading preview…</p><a href="MASTER_INDEX_NAVIGATION.md">Open MASTER_INDEX_NAVIGATION.md</a></article>
         </div>
       </section>
 
       <section class="section section-glow" id="path">
-        <div class="section-heading">
+        <div class="section-heading reveal">
           <p class="eyebrow">Suggested first path</p>
           <h2>How to walk the site</h2>
         </div>
         <div class="path-grid">
-          <article class="path-step">
+          <article class="path-step reveal">
             <strong>01</strong>
             <h3>Start with the README</h3>
             <p>Meet the vision, the purpose, and the covenant's front door.</p>
           </article>
-          <article class="path-step">
+          <article class="path-step reveal">
             <strong>02</strong>
             <h3>Read the complete pillars</h3>
             <p>Absorb the full architecture of the Nine Pillars and the eternal cycle.</p>
           </article>
-          <article class="path-step">
+          <article class="path-step reveal">
             <strong>03</strong>
             <h3>Choose your journey</h3>
             <p>Use the Master Index to follow the path that fits your life right now.</p>
@@ -140,15 +126,20 @@
         </div>
       </section>
 
-      <section class="section">
-        <blockquote class="closing-quote">
+      <section class="section" id="inspiration">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Inspiration</p>
+          <h2>Voices of practice</h2>
+        </div>
+        <blockquote class="closing-quote reveal">
           “This is what love looks like at scale.”
         </blockquote>
       </section>
     </main>
 
     <footer class="footer">
-      <p>Made visible for the browser, with heart.</p>
+      <p>Built with care for stewards, seekers, and collaborators.</p>
+      <p><a href="README.md">Mission</a> · <a href="MASTER_INDEX_NAVIGATION.md">Pathways</a> · <a href="COVENANT_OF_LIGHT.md">Covenant of Light</a></p>
       <p>Shalom ❤️</p>
     </footer>
   </body>
