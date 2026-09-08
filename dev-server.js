@@ -64,11 +64,13 @@ const configScript = () =>
 const injectReload = (html) =>
   html.replace(
     "</body>",
-    `<script>
-      const stream = new EventSource("/__events");
-      stream.addEventListener("reload", () => window.location.reload());
-    </script></body>`
+    `<script src="/__reload.js"></script></body>`
   );
+
+const reloadScript = () =>
+  `const stream = new EventSource("/__events");
+stream.addEventListener("reload", () => window.location.reload());
+`;
 
 const send = (res, status, body, contentType) => {
   res.writeHead(status, {
@@ -111,14 +113,36 @@ const server = http.createServer((req, res) => {
     return send(res, 200, configScript(), mimeTypes[".js"]);
   }
 
-  const relativePath = requestPath === "/" ? "index.html" : requestPath.replace(/^\/+/, "");
-  const absolutePath = path.join(root, relativePath);
-  if (!absolutePath.startsWith(root) || !fs.existsSync(absolutePath)) {
+  if (requestPath === "/__reload.js") {
+    return send(res, 200, reloadScript(), mimeTypes[".js"]);
+  }
+
+  let decodedPath;
+  try {
+    decodedPath = decodeURIComponent(requestPath);
+  } catch {
+    return send(res, 400, "Bad request", mimeTypes[".txt"]);
+  }
+
+  const relativePath = decodedPath === "/" ? "index.html" : decodedPath.replace(/^\/+/, "");
+  const absolutePath = path.resolve(root, relativePath);
+  if (!fs.existsSync(absolutePath)) {
     return send(res, 404, "Not found", mimeTypes[".txt"]);
   }
 
-  const extension = path.extname(absolutePath);
-  const content = fs.readFileSync(absolutePath, extension === ".html" ? "utf8" : null);
+  const realRoot = fs.realpathSync(root);
+  const realPath = fs.realpathSync(absolutePath);
+  const relativeToRoot = path.relative(realRoot, realPath);
+  if (
+    relativeToRoot.startsWith("..") ||
+    path.isAbsolute(relativeToRoot) ||
+    fs.statSync(realPath).isDirectory()
+  ) {
+    return send(res, 404, "Not found", mimeTypes[".txt"]);
+  }
+
+  const extension = path.extname(realPath);
+  const content = fs.readFileSync(realPath, extension === ".html" ? "utf8" : null);
   if (extension === ".html") {
     return send(res, 200, injectReload(content), mimeTypes[".html"]);
   }
