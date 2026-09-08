@@ -5,10 +5,15 @@ const url = require("node:url");
 
 const root = __dirname;
 const rootRealPath = fs.realpathSync(root);
-const rootRealPrefix = `${rootRealPath}${path.sep}`;
 const port = Number(process.env.PORT || 8000);
 const host = process.env.HOST || "0.0.0.0";
 const clients = new Set();
+const staticFiles = new Map(
+  fs
+    .readdirSync(rootRealPath, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && !entry.name.startsWith("."))
+    .map((entry) => [entry.name, path.join(rootRealPath, entry.name)])
+);
 
 const loadDotEnv = () => {
   const envPath = path.join(root, ".env");
@@ -127,24 +132,23 @@ const server = http.createServer((req, res) => {
   }
 
   const relativePath = decodedPath === "/" ? "index.html" : decodedPath.replace(/^\/+/, "");
-  const absolutePath = path.resolve(rootRealPath, relativePath);
-  const inRoot =
-    absolutePath === rootRealPath || absolutePath.startsWith(rootRealPrefix);
-  if (!inRoot || !fs.existsSync(absolutePath)) {
-    return send(res, 404, "Not found", mimeTypes[".txt"]);
-  }
-
-  const realPath = fs.realpathSync(absolutePath);
-  const inRealRoot = realPath === rootRealPath || realPath.startsWith(rootRealPrefix);
   if (
-    !inRealRoot ||
-    fs.statSync(realPath).isDirectory()
+    !relativePath ||
+    relativePath.includes("/") ||
+    relativePath.includes("\\") ||
+    relativePath === "." ||
+    relativePath === ".."
   ) {
     return send(res, 404, "Not found", mimeTypes[".txt"]);
   }
 
-  const extension = path.extname(realPath);
-  const content = fs.readFileSync(realPath, extension === ".html" ? "utf8" : null);
+  const absolutePath = staticFiles.get(relativePath);
+  if (!absolutePath || !fs.existsSync(absolutePath)) {
+    return send(res, 404, "Not found", mimeTypes[".txt"]);
+  }
+
+  const extension = path.extname(absolutePath);
+  const content = fs.readFileSync(absolutePath, extension === ".html" ? "utf8" : null);
   if (extension === ".html") {
     return send(res, 200, injectReload(content), mimeTypes[".html"]);
   }
