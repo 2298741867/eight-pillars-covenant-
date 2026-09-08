@@ -121,8 +121,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if compgen -G "./*.html" > /dev/null; then
+            cp ./*.html release/site/
+          fi
+          if compgen -G "./*.css" > /dev/null; then
+            cp ./*.css release/site/
+          fi
           cp ./*.md release/site/
-          cp README.md release/site/index.md
+          if [[ ! -f release/site/index.html ]]; then
+            cp README.md release/site/index.md
+          fi
           cat <<'EOF' > release/site/_config.yml
           title: "Nine Pillars Covenant"
           description: "Immutable covenant documentation preserved in public light."
