@@ -1,0 +1,12 @@
+services:
+  covenant-site:
+    image: node:20-alpine
+    working_dir: /workspace
+    command: sh -c "node dev-server.js"
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/workspace
+    environment:
+      PORT: 8000
+      HOST: 0.0.0.0

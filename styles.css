@@ -478,6 +478,11 @@ h3 {
   text-decoration: underline;
 }
 
+code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  color: var(--accent-strong);
+}
+
 .retry-preview {
   min-height: 40px;
   border-radius: 999px;
