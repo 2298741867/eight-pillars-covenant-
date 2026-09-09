@@ -4,9 +4,16 @@ const path = require("node:path");
 const url = require("node:url");
 
 const root = __dirname;
+const rootRealPath = fs.realpathSync(root);
 const port = Number(process.env.PORT || 8000);
 const host = process.env.HOST || "0.0.0.0";
 const clients = new Set();
+const staticFiles = new Map(
+  fs
+    .readdirSync(rootRealPath, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && !entry.name.startsWith("."))
+    .map((entry) => [entry.name, path.join(rootRealPath, entry.name)])
+);
 
 const loadDotEnv = () => {
   const envPath = path.join(root, ".env");
@@ -64,11 +71,13 @@ const configScript = () =>
 const injectReload = (html) =>
   html.replace(
     "</body>",
-    `<script>
-      const stream = new EventSource("/__events");
-      stream.addEventListener("reload", () => window.location.reload());
-    </script></body>`
+    `<script src="/__reload.js"></script></body>`
   );
+
+const reloadScript = () =>
+  `const stream = new EventSource("/__events");
+stream.addEventListener("reload", () => window.location.reload());
+`;
 
 const send = (res, status, body, contentType) => {
   res.writeHead(status, {
@@ -111,9 +120,30 @@ const server = http.createServer((req, res) => {
     return send(res, 200, configScript(), mimeTypes[".js"]);
   }
 
-  const relativePath = requestPath === "/" ? "index.html" : requestPath.replace(/^\/+/, "");
-  const absolutePath = path.join(root, relativePath);
-  if (!absolutePath.startsWith(root) || !fs.existsSync(absolutePath)) {
+  if (requestPath === "/__reload.js") {
+    return send(res, 200, reloadScript(), mimeTypes[".js"]);
+  }
+
+  let decodedPath;
+  try {
+    decodedPath = decodeURIComponent(requestPath);
+  } catch {
+    return send(res, 400, "Bad request", mimeTypes[".txt"]);
+  }
+
+  const relativePath = decodedPath === "/" ? "index.html" : decodedPath.replace(/^\/+/, "");
+  if (
+    !relativePath ||
+    relativePath.includes("/") ||
+    relativePath.includes("\\") ||
+    relativePath === "." ||
+    relativePath === ".."
+  ) {
+    return send(res, 404, "Not found", mimeTypes[".txt"]);
+  }
+
+  const absolutePath = staticFiles.get(relativePath);
+  if (!absolutePath || !fs.existsSync(absolutePath)) {
     return send(res, 404, "Not found", mimeTypes[".txt"]);
   }
 
