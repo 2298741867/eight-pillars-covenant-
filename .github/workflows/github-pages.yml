@@ -1,0 +1,79 @@
+name: 🌐 GitHub Pages Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: Build, validate, and publish the covenant site
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Check out the repository
+        uses: actions/checkout@v5
+
+      - name: ⚙️ Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+
+      - name: 🧪 Validate repository site assets
+        run: node validate-site.js
+
+      - name: 🏗️ Build GitHub Pages output
+        run: node build-site.js
+
+      - name: 🏷️ Create version tag when needed
+        shell: bash
+        run: |
+          set -euo pipefail
+          version_tag="v$(tr -d '[:space:]' < VERSION)"
+          git fetch --tags --force
+          if git rev-parse "$version_tag" >/dev/null 2>&1; then
+            echo "Version tag $version_tag already exists."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$version_tag" "$GITHUB_SHA" -m "Nine Pillars Covenant ${version_tag}"
+          git push origin "refs/tags/$version_tag"
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: 📝 Write deployment summary
+        shell: bash
+        run: |
+          {
+            echo "## GitHub Pages Deployment"
+            echo
+            echo "- Live URL: https://2298741867.github.io/eight-pillars-covenant-/"
+            echo "- Status page: https://2298741867.github.io/eight-pillars-covenant-/status.html"
+            echo "- Output: GitHub Pages artifact deployment"
+            echo "- Version tag: v$(tr -d '[:space:]' < VERSION)"
+            echo "- Blessing: Shalom ❤️"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: ❤️ Bless the deployment
+        run: echo "Shalom ❤️ The covenant deployment suite is live."

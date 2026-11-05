@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://2298741867.github.io/eight-pillars-covenant-/sitemap.xml

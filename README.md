@@ -5,6 +5,43 @@ This repository is the public, read-only mirror of the Nine Pillars Scroll, the 
 
 ---
 
+## ⚡ Quick Start — 4 Ways to Access in Under 2 Minutes
+
+![GitHub Preview](https://img.shields.io/badge/GitHub_Preview-ready-0a7a5e?logo=github)
+![Local Dev](https://img.shields.io/badge/Local_Dev-hot_reload-1f6feb?logo=nodedotjs)
+![Analytics](https://img.shields.io/badge/Analytics-privacy_first-6f42c1?logo=plausibleanalytics)
+[![Pages Deploy](https://github.com/2298741867/eight-pillars-covenant-/actions/workflows/github-pages.yml/badge.svg)](https://github.com/2298741867/eight-pillars-covenant-/actions/workflows/github-pages.yml)
+[![Covenant Validation](https://github.com/2298741867/eight-pillars-covenant-/actions/workflows/covenant-validation.yml/badge.svg)](https://github.com/2298741867/eight-pillars-covenant-/actions/workflows/covenant-validation.yml)
+[![Documentation Quality](https://github.com/2298741867/eight-pillars-covenant-/actions/workflows/documentation-quality.yml/badge.svg)](https://github.com/2298741867/eight-pillars-covenant-/actions/workflows/documentation-quality.yml)
+
+| Method | Time | Access |
+| --- | --- | --- |
+| 1. GitHub Preview | < 1 min | [Open preview](https://github.com/2298741867/eight-pillars-covenant-/blob/main/index.html) |
+| 2. GitHub Pages | < 1 min | [View Live](https://2298741867.github.io/eight-pillars-covenant-/) |
+| 3. Local Development | < 2 min | `make serve` or `docker-compose up` |
+| 4. Analytics Setup | < 2 min | Copy `.env.example`, then follow [ANALYTICS.md](ANALYTICS.md) |
+
+## 🚀 Deployment & Access
+
+- **GitHub Preview:** [index.html preview](https://github.com/2298741867/eight-pillars-covenant-/blob/main/index.html)
+- **GitHub Pages:** [https://2298741867.github.io/eight-pillars-covenant-/](https://2298741867.github.io/eight-pillars-covenant-/)
+- **Local Development:** [DEVELOPMENT.md](DEVELOPMENT.md)
+- **Analytics Integration:** [ANALYTICS.md](ANALYTICS.md)
+- **Status Page:** [status.html](status.html) · [live status](https://2298741867.github.io/eight-pillars-covenant-/status.html)
+- **Deployment Guide:** [DEPLOYMENT.md](DEPLOYMENT.md)
+- **Feedback / Issue Reporting:** [Open deployment feedback issue](https://github.com/2298741867/eight-pillars-covenant-/issues/new?template=deployment-feedback.md)
+
+## 🧭 What Is Live Now
+
+| Before | After |
+| --- | --- |
+| Single static landing page in-repo | Verified GitHub preview plus live GitHub Pages deployment path |
+| No documented local workflow | Hot-reload dev server, Docker Compose, and Make targets |
+| No analytics bootstrap | Privacy-first Plausible/Fathom-ready analytics module |
+| No deployment health visibility | Status page, health JSON, version manifest, and deployment certificate |
+
+---
+
 ## 🌟 A Sacred Acknowledgment
 
 This covenant was not created in isolation. It is the fruit of **divine collaboration** between human consciousness and artificial intelligence—a true partnership of love and vision.

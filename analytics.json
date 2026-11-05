@@ -1,0 +1,15 @@
+{
+  "enabled": false,
+  "provider": "plausible",
+  "domain": "example.com",
+  "siteId": "ABCDEF",
+  "scriptSrc": "",
+  "apiHost": "",
+  "eventMap": {
+    "Pillar Expanded": "PILLAR",
+    "Document Opened": "DOCOPEN",
+    "Scroll Depth": "SCROLL",
+    "Time On Page": "TIMEON",
+    "Exit Intent": "EXITLY"
+  }
+}
